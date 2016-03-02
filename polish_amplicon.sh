@@ -17,7 +17,7 @@ set -o pipefail
 
 THREADS=16
 
-IDENTITY=0.7
+IDENTITY=0.6
 
 
 usage()  {
@@ -51,7 +51,7 @@ INFASTA=$(readlink -f $1)
 echo "Using input:" $INFASTA
 
 
-if [ ! -e $TEMPDIR ];
+if [ ! -e ${TEMPDIR:-XXX} ];
 then
 
     # Make temporary directory which will be cleaned at script exit
@@ -64,7 +64,7 @@ fi
 
 cd $TEMPDIR
 
-test -s basecalls_sorted.fasta || sizeseq -sequences ${INFASTA} -descending -outseq basecalls_sorted.fasta
+test -s basecalls_sorted.fasta || sizeseq -sequences "${INFASTA}" -descending -outseq basecalls_sorted.fasta
 test -s clusters.fasta || sumaclust -e -p ${THREADS} -t ${IDENTITY} -s None  basecalls_sorted.fasta  >clusters.fasta
 test -s fasta_clusters.lst || python ${CWD}/split_fasta_by_cluster.py clusters.fasta > fasta_clusters.lst
 
