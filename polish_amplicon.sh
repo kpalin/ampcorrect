@@ -29,6 +29,8 @@ usage()  {
     
 }
 
+trap usage EXIT
+
 CWD=$(dirname $(readlink -f $0)) 
 
 
@@ -59,7 +61,7 @@ then
 #function _cleanup {
 #    echo $TEMPDIR
 #}
-#trap _cleanup EXIT
+#
 fi
 
 cd $TEMPDIR
@@ -116,3 +118,7 @@ samtools stats correctedAmplicons.sorted.bam|grep -E '^(#|SN)'
 EOF
 
 sbatch <summarise.sh
+
+
+trap EXIT
+
