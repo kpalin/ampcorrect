@@ -21,10 +21,12 @@ IDENTITY=0.6
 
 
 usage()  {
-    echo -e "usage:\n$0 [-c WORKDIR] input.fasta
+    echo -e "usage:\n$0 [-c WORKDIR] [-r REF.fasta] input.fasta
 
--c WORKDIR  Continue work on this directory
--h          Show this message and exit." >&2
+
+-c WORKDIR   Continue work on this directory
+-r REF.fasta Genome reference for mapping the final results. 
+-h           Show this message and exit." >&2
     exit 1
     
 }
@@ -35,14 +37,18 @@ CWD=$(dirname $(readlink -f $0))
 
 
 
-while getopts  "hc:" flag
+while getopts  "hc:r:" flag
 do
     case "$flag" in 
 	c)
 	TEMPDIR="$OPTARG"
 	;;
+	r)
+	GENOMEREF="$OPTARG"
+	;;
 	h|*)
-	usage
+	    trap EXIT
+	    usage
 	;;
     esac
 done
@@ -109,7 +115,7 @@ set -o pipefail
 awk  '\$2>=3 {sub(/[.]fasta\$/,".clustal",\$1);print \$1}' fasta_clusters.lst |xargs python $CWD/clustal2fasta.py  >correctedAmplicons.fasta
 awk  '\$2<3 {print \$1}' fasta_clusters.lst |xargs cat >>correctedAmplicons.fasta
 
-bwa mem -t 4  /mnt/cg8/reference-genomes/hs37d5_viral_bwa0.7.12/hs37d5_viral.fa correctedAmplicons.fasta | samtools view -Sb - | samtools sort - correctedAmplicons.sorted 
+bwa mem -t 4  ${GENOMEREF:-/mnt/cg8/reference-genomes/hs37d5_viral_bwa0.7.12/hs37d5_viral.fa} correctedAmplicons.fasta | samtools view -Sb - | samtools sort - correctedAmplicons.sorted 
 
 samtools index correctedAmplicons.sorted.bam
 
@@ -117,7 +123,7 @@ samtools stats correctedAmplicons.sorted.bam|grep -E '^(#|SN)'
 
 EOF
 
-sbatch <summarise.sh
+(which sbatch >/dev/null && sbatch <summarise.sh)|| bash summarise.sh
 
 
 trap EXIT
